@@ -31,8 +31,6 @@ try:
     scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/drive']
     
     # --- ЗМІНЕНО СПОСІБ ПІДКЛЮЧЕННЯ ---
-    # Бот більше не читає файл credentials.json.
-    # Замість цього, він читає його вміст з безпечної змінної на сервері.
     creds_json_str = os.environ.get("GOOGLE_CREDS_JSON")
     creds_json_dict = json.loads(creds_json_str)
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json_dict, scope)
@@ -47,10 +45,6 @@ try:
 except Exception as e:
     print(f"Помилка підключення до Google Таблиці: {e}")
     workbook = None
-
-#
-# --- УСЯ ІНША ЛОГІКА ВАШОГО БОТА ЗАЛИШАЄТЬСЯ БЕЗ ЗМІН ---
-#
 
 # --- Функции для работы с пользователями ---
 def get_user_balance(user_id):
@@ -201,8 +195,9 @@ async def handle_button_callback(update: Update, context: CallbackContext):
             try:
                 user_cell = users_sheet.find(str(user_id), in_column=1)
                 if user_cell and users_sheet.cell(user_cell.row, 4).value:
-                    ref_id, ref_bal = int(users_sheet.cell(user_cell.row, 4).value), update_user_balance(ref_id, REFERRAL_BONUS)
-                    if ref_bal: await context.bot.send_message(ref_id, f"🎉 Ваш реферал @{(await context.bot.get_chat(user_id)).username} выполнил задание! Вам начислено **{REFERRAL_BONUS} голды**.\nНовый баланс: **{ref_bal}**.", parse_mode='Markdown')
+                    ref_id = int(users_sheet.cell(user_cell.row, 4).value)
+                    ref_bal = update_user_balance(ref_id, REFERRAL_BONUS)
+                    if ref_bal is not None: await context.bot.send_message(ref_id, f"🎉 Ваш реферал @{(await context.bot.get_chat(user_id)).username} выполнил задание! Вам начислено **{REFERRAL_BONUS} голды**.\nНовый баланс: **{ref_bal}**.", parse_mode='Markdown')
             except Exception as e: print(f"Ошибка начисления реф. бонуса: {e}")
         elif action == 'reject':
             task_sheet.update_cell(row_number, 7, 'Доступно')
@@ -228,9 +223,14 @@ async def process_payouts(update: Update, context: CallbackContext):
     now = datetime.datetime.utcnow()
     for i, p in enumerate(pending):
         if now - datetime.datetime.fromisoformat(p['ConfirmationTime']) >= datetime.timedelta(days=1):
-            user_id, reward, new_bal = int(p['UserID']), int(p['Reward']), update_user_balance(user_id, reward)
-            if new_bal is not None: await context.bot.send_message(user_id, f"✅ Начислено **{reward} голды**! Ваш баланс: **{new_bal}**.", parse_mode='Markdown'); to_delete.append(i + 2); processed += 1
-            else: print(f"Не найден пользователь {user_id}")
+            user_id, reward = int(p['UserID']), int(p['Reward'])
+            new_bal = update_user_balance(user_id, reward)
+            if new_bal is not None: 
+                await context.bot.send_message(user_id, f"✅ Начислено **{reward} голды**! Ваш баланс: **{new_bal}**.", parse_mode='Markdown')
+                to_delete.append(i + 2)
+                processed += 1
+            else: 
+                print(f"Не найден пользователь {user_id}")
     for row_num in sorted(to_delete, reverse=True): payouts_sheet.delete_rows(row_num)
     await update.message.reply_text(f"✅ Завершено! Выплат: {processed}.")
 
@@ -273,6 +273,7 @@ def main():
         },
         fallbacks=[CommandHandler('cancel', cancel_action), MessageHandler(filters.Regex('^⬅️ Назад в меню$'), cancel_action)]
     )
+    application.add_handler(withdrawal_handler)
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.Regex('^📝 Выполнить задание$'), choose_platform))
@@ -286,10 +287,10 @@ def main():
     application.add_handler(CommandHandler("process_payouts", process_payouts))
     application.add_handler(CommandHandler("return_abandoned_tasks", return_abandoned_tasks))
     
-   # ... (код з application.add_handler) ...
-
     print("Бот запущен и работает...")
-application.run_polling(allowed_updates=Update.ALL_TYPES)
+    # === ВИПРАВЛЕННЯ: Повернув цей рядок всередину функції main з правильним відступом ===
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
+# === ВИПРАВЛЕННЯ: Цей блок має бути без відступів ===
 if __name__ == '__main__':
     main()
