@@ -289,7 +289,7 @@ def main():
     
     print("Бот запущен и работает...")
     # === ВИПРАВЛЕННЯ: Повернув цей рядок всередину функції main з правильним відступом ===
-    application.run_polling()
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 # === ВИПРАВЛЕННЯ: Цей блок має бути без відступів ===
 if __name__ == '__main__':
