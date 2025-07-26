@@ -273,7 +273,6 @@ def main():
         },
         fallbacks=[CommandHandler('cancel', cancel_action), MessageHandler(filters.Regex('^⬅️ Назад в меню$'), cancel_action)]
     )
-    application.add_handler(withdrawal_handler)
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.Regex('^📝 Выполнить задание$'), choose_platform))
@@ -287,8 +286,11 @@ def main():
     application.add_handler(CommandHandler("process_payouts", process_payouts))
     application.add_handler(CommandHandler("return_abandoned_tasks", return_abandoned_tasks))
     
+   # ... (код з application.add_handler) ...
+
     print("Бот запущен и работает...")
-    application.run_polling()
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
+
 
 if __name__ == '__main__':
     main()
