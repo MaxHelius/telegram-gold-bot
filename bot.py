@@ -1,7 +1,7 @@
 # --- Імпортуємо бібліотеки ---
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler, ConversationHandler
 import datetime
 import random
@@ -289,8 +289,7 @@ def main():
     
     print("Бот запущен и работает...")
     # === ВИПРАВЛЕННЯ: Повернув цей рядок всередину функції main з правильним відступом ===
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
-
+   
 # === ВИПРАВЛЕННЯ: Цей блок має бути без відступів ===
 if __name__ == '__main__':
     main()
