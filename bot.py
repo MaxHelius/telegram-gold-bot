@@ -288,7 +288,7 @@ def main():
     application.add_handler(CommandHandler("return_abandoned_tasks", return_abandoned_tasks))
     
     print("Бот запущен и работает...")
-    application.run_polling()
+   application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
     main()
